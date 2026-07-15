@@ -1,0 +1,303 @@
+direction: right
+
+Lexer: {
+  shape: class
+  + nextToken(): Token
+  + peekToken(): Token
+}
+
+Token: {
+  shape: class
+  + type: TokenType
+  + lexeme: String
+  + line: int
+  + column: int
+}
+
+TokenType: {
+  shape: enum
+  KEYWORD_SELECT
+  IDENTIFIER
+  LITERAL_STRING
+  OPERATOR_EQ
+  COMMA
+  // ... other token types
+}
+
+Parser: {
+  shape: class
+  + parse(): ASTNode
+  - consume(expectedType: TokenType): void
+  - match(expectedType: TokenType): boolean
+  - parseSelectStatement(): SelectStatement
+  // ... other parse methods
+}
+
+ASTNode: {
+  shape: interface
+  + accept(visitor: ASTVisitor): void
+}
+
+ASTVisitor: {
+  shape: interface
+  + visit(node: SelectStatement): void
+  + visit(node: InsertStatement): void
+  // ... other visit methods
+}
+
+Statement: {
+  shape: abstract class
+}
+
+SelectStatement: {
+  shape: class
+  + distinct: boolean
+  + selectList: List<Expression>
+  + fromClause: TableExpression
+  + whereClause: Expression
+  + orderByClause: List<SortSpecification>
+  + limitClause: LimitClause
+}
+
+InsertStatement: {
+  shape: class
+  + tableName: Identifier
+  + columnNames: List<Identifier>
+  + values: List<Expression>
+}
+
+UpdateStatement: {
+  shape: class
+  + tableName: Identifier
+  + setClauses: List<SetClause>
+  + whereClause: Expression
+}
+
+DeleteStatement: {
+  shape: class
+  + tableName: Identifier
+  + whereClause: Expression
+}
+
+CreateTableStatement: {
+  shape: class
+  + tableName: Identifier
+  + columnDefinitions: List<ColumnDefinition>
+}
+
+DropTableStatement: {
+  shape: class
+  + tableName: Identifier
+}
+
+Expression: {
+  shape: abstract class
+}
+
+LiteralExpression: {
+  shape: class
+  + value: Object
+  + type: DataType
+}
+
+ColumnRefExpression: {
+  shape: class
+  + columnName: Identifier
+  + tableName: Identifier
+}
+
+BinaryExpression: {
+  shape: class
+  + left: Expression
+  + operator: Operator
+  + right: Expression
+}
+
+UnaryExpression: {
+  shape: class
+  + operator: Operator
+  + operand: Expression
+}
+
+FunctionCallExpression: {
+  shape: class
+  + functionName: Identifier
+  + arguments: List<Expression>
+}
+
+PredicateExpression: {
+  shape: abstract class
+}
+
+ComparisonPredicate: {
+  shape: class
+}
+
+IsNullPredicate: {
+  shape: class
+}
+
+LikePredicate: {
+  shape: class
+}
+
+InPredicate: {
+  shape: class
+}
+
+TableExpression: {
+  shape: abstract class
+}
+
+TableRef: {
+  shape: class
+  + tableName: Identifier
+  + alias: Identifier
+}
+
+ColumnDefinition: {
+  shape: class
+  + columnName: Identifier
+  + dataType: DataType
+  + constraints: List<ColumnConstraint>
+}
+
+SetClause: {
+  shape: class
+  + columnName: Identifier
+  + valueExpression: Expression
+}
+
+SortSpecification: {
+  shape: class
+  + sortKey: Expression
+  + order: SortOrder
+}
+
+LimitClause: {
+  shape: class
+  + limit: int
+  + offset: int
+}
+
+DataType: {
+  shape: enum
+  INT
+  VARCHAR
+  BOOLEAN
+  DOUBLE
+}
+
+Operator: {
+  shape: enum
+  EQ
+  NEQ
+  LT
+  GT
+  // ... other operators
+}
+
+ColumnConstraint: {
+  shape: enum
+  PRIMARY_KEY
+  NOT_NULL
+  UNIQUE
+}
+
+SortOrder: {
+  shape: enum
+  ASC
+  DESC
+}
+
+LexicalException: {
+  shape: class
+  + message: String
+  + line: int
+  + column: int
+}
+
+SyntaxException: {
+  shape: class
+  + message: String
+  + line: int
+  + column: int
+  + expectedTokenTypes: List<TokenType>
+  + foundTokenType: TokenType
+}
+
+// Relationships
+Lexer -- Token
+Parser -- Lexer: uses >
+Parser -- ASTNode: creates >
+
+ASTNode <|-- Statement
+ASTNode <|-- Expression
+ASTNode <|-- TableExpression
+ASTNode <|-- ColumnDefinition
+ASTNode <|-- SetClause
+ASTNode <|-- SortSpecification
+ASTNode <|-- LimitClause
+
+Statement <|-- SelectStatement
+Statement <|-- InsertStatement
+Statement <|-- UpdateStatement
+Statement <|-- DeleteStatement
+Statement <|-- CreateTableStatement
+Statement <|-- DropTableStatement
+
+Expression <|-- LiteralExpression
+Expression <|-- ColumnRefExpression
+Expression <|-- BinaryExpression
+Expression <|-- UnaryExpression
+Expression <|-- FunctionCallExpression
+Expression <|-- PredicateExpression
+
+PredicateExpression <|-- ComparisonPredicate
+PredicateExpression <|-- IsNullPredicate
+PredicateExpression <|-- LikePredicate
+PredicateExpression <|-- InPredicate
+
+TableExpression <|-- TableRef
+
+SelectStatement -- Expression: has >
+SelectStatement -- TableExpression: has >
+SelectStatement -- SortSpecification: has >
+SelectStatement -- LimitClause: has >
+
+InsertStatement -- Identifier: has >
+InsertStatement -- Expression: has >
+
+UpdateStatement -- Identifier: has >
+UpdateStatement -- SetClause: has >
+UpdateStatement -- Expression: has >
+
+DeleteStatement -- Identifier: has >
+DeleteStatement -- Expression: has >
+
+CreateTableStatement -- Identifier: has >
+CreateTableStatement -- ColumnDefinition: has >
+
+ColumnDefinition -- Identifier: has >
+ColumnDefinition -- DataType: has >
+ColumnDefinition -- ColumnConstraint: has >
+
+SetClause -- Identifier: has >
+SetClause -- Expression: has >
+
+SortSpecification -- Expression: has >
+SortSpecification -- SortOrder: has >
+
+BinaryExpression -- Expression: has >
+BinaryExpression -- Operator: has >
+
+UnaryExpression -- Operator: has >
+UnaryExpression -- Expression: has >
+
+FunctionCallExpression -- Identifier: has >
+FunctionCallExpression -- Expression: has >
+
+Lexer -- LexicalException: throws >
+Parser -- SyntaxException: throws >
+
+ASTNode -- ASTVisitor: accepts >
